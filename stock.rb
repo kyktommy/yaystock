@@ -1,31 +1,32 @@
 #!/usr/bin/env ruby
 
-require 'thor'
-require 'net/http'
-require 'uri'
-require 'csv'
-require 'terminal-table'
+%w{thor net/http uri csv terminal-table}
+.map { |lib| require lib }
 
 class App < Thor
 
   desc "stock", "query stock detail <NUMBER>"
   def stock(number)
     print_stock_table do |t|
-      t << get_stock_data(number)[0].to_hash.values
+      t << latest_stock_price(number)
     end
   end
 
-  desc "stocks", "query many stocks <NUMBER...>"
-  option :numbers, required: true, type: :array
+  desc "stocks", "query many stocks <NUMBERS...>"
+  option :numbers, required: true, type: :array, aliases: "-n"
   def stocks
     print_stock_table do |t|
       options[:numbers].each do |number|
-        t << get_stock_data(number)[0].to_hash.values  
+        t << latest_stock_price(number)
       end
     end
   end
 
   private
+
+  def latest_stock_price(number)
+    get_stock_data(number).first.to_hash.values
+  end
 
   def print_stock_table
     table = Terminal::Table.new(headings: stock_header) do |t|
